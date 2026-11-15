@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "mybus-ticketing-system"
+		},
+		{
+			"path": "mybus-be"
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive",
+		"java.compile.nullAnalysis.mode": "automatic"
+	}
+}

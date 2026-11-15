@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../mybus-be"
+		}
+	],
+	"settings": {
+		"skillSync.sources": [
+			{
+				"type": "open-skills",
+				"value": "directory"
+			}
+		],
+		"java.compile.nullAnalysis.mode": "automatic"
+	}
+}

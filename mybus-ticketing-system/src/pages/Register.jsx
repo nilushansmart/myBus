@@ -268,6 +268,28 @@ const Register = () => {
                 value={formData.password}
                 onChange={handleChange}
                 onBlur={() => handleBlur('password')}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockOutlinedIcon color="action" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label="toggle password visibility"
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          onMouseDown={(e) => e.preventDefault()}
+                          edge="end"
+                          color="primary"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  },
+                }}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -279,10 +301,11 @@ const Register = () => {
                       <IconButton
                         aria-label="toggle password visibility"
                         onClick={() => setShowPassword((prev) => !prev)}
+                        onMouseDown={(e) => e.preventDefault()}
                         edge="end"
-                        size="small"
+                        color="primary"
                       >
-                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
@@ -340,6 +363,38 @@ const Register = () => {
                   fontWeight: 600,
                 },
               }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockOutlinedIcon
+                        color={touched.confirmPassword && !passwordsMatch ? 'error' : 'action'}
+                        fontSize="small"
+                      />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      {formData.confirmPassword && (
+                        passwordsMatch ? (
+                          <CheckCircleOutlineIcon color="success" fontSize="small" sx={{ mr: 1 }} />
+                        ) : (
+                          <ErrorOutlineIcon color="error" fontSize="small" sx={{ mr: 1 }} />
+                        )
+                      )}
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        onMouseDown={(e) => e.preventDefault()}
+                        edge="end"
+                        color="primary"
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -361,10 +416,11 @@ const Register = () => {
                     <IconButton
                       aria-label="toggle confirm password visibility"
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      onMouseDown={(e) => e.preventDefault()}
                       edge="end"
-                      size="small"
+                      color="primary"
                     >
-                      {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
                   </InputAdornment>
                 ),

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import me.nilushan.mybus.entity.enums.BookingStatusType;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ public class Booking {
     @Column(name = "booking_id")
     private Long bookingId;
 
-    @Column(name = "booking_reference", nullable = false, unique = true, length = 12)
+    @Column(name = "booking_reference", nullable = false, unique = true, length = 16)
     private String bookingReference;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -39,18 +40,25 @@ public class Booking {
     @Column(name = "booked_at")
     private LocalDateTime bookedAt;
 
-    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("booking")
     @Builder.Default
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<Ticket> tickets = new ArrayList<>();
 
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("booking")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Payment> payments = new ArrayList<>();
+
     @OneToOne(mappedBy = "booking", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("booking")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Payment payment;
+    private Invoice invoice;
 
     @PrePersist
     public void prePersist() {

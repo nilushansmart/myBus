@@ -2,7 +2,11 @@ package me.nilushan.mybus.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.nilushan.mybus.dto.*;
+import me.nilushan.mybus.dto.request.CreateBookingRequest;
+import me.nilushan.mybus.dto.request.SeatLockRequest;
+import me.nilushan.mybus.dto.response.ApiResponse;
+import me.nilushan.mybus.dto.response.BookingResponse;
+import me.nilushan.mybus.dto.response.SeatDto;
 import me.nilushan.mybus.entity.User;
 import me.nilushan.mybus.service.AuthService;
 import me.nilushan.mybus.service.BookingService;

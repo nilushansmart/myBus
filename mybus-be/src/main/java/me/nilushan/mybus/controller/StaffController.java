@@ -2,9 +2,13 @@ package me.nilushan.mybus.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.nilushan.mybus.dto.*;
+import me.nilushan.mybus.dto.request.CheckInRequest;
+import me.nilushan.mybus.dto.response.ApiResponse;
+import me.nilushan.mybus.dto.response.TicketResponse;
+import me.nilushan.mybus.dto.response.TripDetailResponse;
 import me.nilushan.mybus.entity.Trip;
 import me.nilushan.mybus.entity.enums.TripStatus;
+import me.nilushan.mybus.exception.BadRequestException;
 import me.nilushan.mybus.service.StaffService;
 import me.nilushan.mybus.service.TripService;
 import org.springframework.http.ResponseEntity;
@@ -58,15 +62,16 @@ public class StaffController {
             @RequestBody(required = false) Map<String, Object> body) {
         TripStatus resolvedStatus = status;
         if (resolvedStatus == null && body != null && body.containsKey("status")) {
-            resolvedStatus = TripStatus.valueOf(body.get("status").toString().toLowerCase());
+            try {
+                resolvedStatus = TripStatus.valueOf(body.get("status").toString().toLowerCase());
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid trip status: " + body.get("status"));
+            }
         }
         if (resolvedStatus == null) {
-            throw new RuntimeException(
-                    "Trip status must be provided as a query param or in JSON body (e.g. status=delayed)");
+            throw new BadRequestException("Trip status must be provided as a query param or in JSON body (e.g. status=delayed)");
         }
         Trip trip = tripService.updateTripStatus(tripId, resolvedStatus);
-        return ResponseEntity
-                .ok(ApiResponse.success("Trip status updated to " + resolvedStatus, tripService.mapToTripDetail(trip)));
+        return ResponseEntity.ok(ApiResponse.success("Trip status updated to " + resolvedStatus, tripService.mapToTripDetail(trip)));
     }
-                
 }

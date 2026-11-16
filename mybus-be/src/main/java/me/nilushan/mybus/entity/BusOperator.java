@@ -2,6 +2,7 @@ package me.nilushan.mybus.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,16 +17,22 @@ public class BusOperator {
     @Column(name = "operator_id")
     private Long operatorId;
 
-    @Column(name = "operator_name", nullable = false, length = 120)
+    @Column(name = "operator_name", nullable = false)
     private String operatorName;
 
-    @Column(name = "contact_phone", nullable = false, length = 20)
+    @Column(name = "contact_phone")
     private String contactPhone;
 
-    @Column(name = "contact_email", length = 150)
+    @Column(name = "contact_email")
     private String contactEmail;
 
-    @Column(name = "is_active")
+    @Column(name = "address")
+    private String address;
+
+    @Column(name = "license_number")
+    private String licenseNumber;
+
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
@@ -34,7 +41,9 @@ public class BusOperator {
 
     @PrePersist
     public void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
-        if (isActive == null) isActive = true;
+        if (createdAt == null)
+            createdAt = LocalDateTime.now();
+        if (isActive == null)
+            isActive = true;
     }
 }

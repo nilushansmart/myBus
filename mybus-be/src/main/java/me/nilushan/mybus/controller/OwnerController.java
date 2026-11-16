@@ -2,7 +2,13 @@ package me.nilushan.mybus.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.nilushan.mybus.dto.*;
+import me.nilushan.mybus.dto.request.BusRequest;
+import me.nilushan.mybus.dto.request.RouteRequest;
+import me.nilushan.mybus.dto.request.StaffRequest;
+import me.nilushan.mybus.dto.request.TripRequest;
+import me.nilushan.mybus.dto.response.ApiResponse;
+import me.nilushan.mybus.dto.response.BillingSummaryResponse;
+import me.nilushan.mybus.dto.response.TripDetailResponse;
 import me.nilushan.mybus.entity.*;
 import me.nilushan.mybus.service.*;
 import org.springframework.http.ResponseEntity;
@@ -70,7 +76,7 @@ public class OwnerController {
     }
 
     @GetMapping("/buses/{id}/seats")
-    public ResponseEntity<ApiResponse<List<Seat>>> getBusSeats(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<List<LayoutSeat>>> getBusSeats(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success(fleetService.getSeatsForBus(id)));
     }
 

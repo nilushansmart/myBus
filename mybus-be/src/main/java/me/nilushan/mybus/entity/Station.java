@@ -15,21 +15,26 @@ public class Station {
     @Column(name = "station_id")
     private Long stationId;
 
-    @Column(name = "station_name", nullable = false, length = 120)
+    @Column(name = "station_name", nullable = false)
     private String stationName;
 
-    @Column(name = "city", nullable = false, length = 80)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "city_id")
+    private City cityEntity;
+
+    @Column(name = "city", nullable = false)
     private String city;
 
-    @Column(name = "state", nullable = false, length = 80)
+    @Column(name = "state")
     private String state;
 
-    @Column(name = "address", columnDefinition = "TEXT")
+    @Column(name = "address")
     private String address;
 
-    @Column(name = "latitude")
-    private Double latitude;
-
-    @Column(name = "longitude")
-    private Double longitude;
+    @PrePersist
+    public void prePersist() {
+        if (city == null && cityEntity != null) {
+            city = cityEntity.getCityName();
+        }
+    }
 }

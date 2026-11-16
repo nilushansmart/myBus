@@ -3,7 +3,7 @@ package me.nilushan.mybus.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,6 +19,9 @@ public class Route {
     @Column(name = "route_id")
     private Long routeId;
 
+    @Column(name = "route_number")
+    private String routeNumber;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "origin_station_id", nullable = false)
     private Station originStation;
@@ -33,18 +36,11 @@ public class Route {
     @Column(name = "total_distance_km", nullable = false)
     private Double totalDistanceKm;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
     @OneToMany(mappedBy = "route", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("route")
+    @OrderBy("stopSequence ASC")
     @Builder.Default
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<RouteStop> routeStops = new ArrayList<>();
-
-    @PrePersist
-    public void prePersist() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
-    }
 }

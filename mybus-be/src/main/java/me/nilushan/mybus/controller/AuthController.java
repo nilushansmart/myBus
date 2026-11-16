@@ -2,10 +2,10 @@ package me.nilushan.mybus.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import me.nilushan.mybus.dto.ApiResponse;
-import me.nilushan.mybus.dto.AuthResponse;
-import me.nilushan.mybus.dto.LoginRequest;
-import me.nilushan.mybus.dto.RegisterRequest;
+import me.nilushan.mybus.dto.request.LoginRequest;
+import me.nilushan.mybus.dto.request.RegisterRequest;
+import me.nilushan.mybus.dto.response.ApiResponse;
+import me.nilushan.mybus.dto.response.AuthResponse;
 import me.nilushan.mybus.entity.User;
 import me.nilushan.mybus.service.AuthService;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +43,7 @@ public class AuthController {
                 .email(user.getEmail())
                 .fullName(user.getFullName())
                 .phoneNumber(user.getPhoneNumber())
-                .role(user.getRole())
+                .role(user.getRoleType())
                 .build();
         return ResponseEntity.ok(ApiResponse.success(response));
     }

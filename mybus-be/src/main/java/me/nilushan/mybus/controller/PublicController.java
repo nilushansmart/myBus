@@ -1,9 +1,8 @@
 package me.nilushan.mybus.controller;
 
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-import me.nilushan.mybus.dto.ApiResponse;
-import me.nilushan.mybus.dto.TripDetailResponse;
+import me.nilushan.mybus.dto.response.ApiResponse;
+import me.nilushan.mybus.dto.response.TripDetailResponse;
 import me.nilushan.mybus.entity.Route;
 import me.nilushan.mybus.entity.Station;
 import me.nilushan.mybus.service.RouteService;

@@ -6,8 +6,7 @@ import lombok.*;
 
 @Entity
 @Table(name = "route_stops", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"route_id", "stop_sequence"}),
-    @UniqueConstraint(columnNames = {"route_id", "station_id"})
+        @UniqueConstraint(columnNames = { "route_id", "stop_sequence" })
 })
 @Data
 @NoArgsConstructor
@@ -16,8 +15,8 @@ import lombok.*;
 public class RouteStop {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "route_stop_id")
-    private Long routeStopId;
+    @Column(name = "stop_id")
+    private Long stopId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id", nullable = false)
@@ -33,9 +32,9 @@ public class RouteStop {
     @Column(name = "stop_sequence", nullable = false)
     private Integer stopSequence;
 
-    @Column(name = "distance_from_origin_km", nullable = false)
+    @Column(name = "distance_from_origin_km")
     private Double distanceFromOriginKm;
 
-    @Column(name = "duration_offset_minutes", nullable = false)
-    private Integer durationOffsetMinutes;
+    @Column(name = "duration_from_origin_minutes")
+    private Integer durationFromOriginMinutes;
 }

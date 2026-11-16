@@ -4,11 +4,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import me.nilushan.mybus.entity.enums.SeatReservationStatus;
-import java.time.LocalDateTime;
+
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "trip_seats", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"trip_id", "seat_id"})
+        @UniqueConstraint(columnNames = { "trip_id", "layout_seat_id" })
 })
 @Data
 @NoArgsConstructor
@@ -28,25 +29,26 @@ public class TripSeat {
     private Trip trip;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "seat_id", nullable = false)
-    private Seat seat;
+    @JoinColumn(name = "layout_seat_id", nullable = false)
+    private LayoutSeat layoutSeat;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     @Builder.Default
     private SeatReservationStatus status = SeatReservationStatus.available;
 
-    @Column(name = "locked_until")
-    private LocalDateTime lockedUntil;
+    @Column(name = "fare_override", precision = 10, scale = 2)
+    private BigDecimal fareOverride;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "locked_by_user_id")
+    @OneToOne(mappedBy = "tripSeat", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("tripSeat")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private User lockedByUser;
+    private SeatLock seatLock;
 
     @PrePersist
     public void prePersist() {
-        if (status == null) status = SeatReservationStatus.available;
+        if (status == null)
+            status = SeatReservationStatus.available;
     }
 }

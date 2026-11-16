@@ -3,6 +3,7 @@ package me.nilushan.mybus.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import me.nilushan.mybus.entity.enums.UserRole;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,13 +15,13 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "user_id", updatable = false, nullable = false)
+    @Column(name = "user_id", updatable = false, nullable = false, length = 36)
     private String userId;
 
-    @Column(name = "full_name", nullable = false, length = 100)
+    @Column(name = "full_name", nullable = false)
     private String fullName;
 
-    @Column(name = "email", nullable = false, unique = true, length = 150)
+    @Column(name = "email", nullable = false, unique = true)
     private String email;
 
     @Column(name = "phone_number", nullable = false, unique = true, length = 20)
@@ -29,16 +30,34 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "role_id")
+    private Role role;
+
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", nullable = false)
-    private UserRole role;
+    @Column(name = "role_type")
+    @Builder.Default
+    private UserRole roleType = UserRole.ROLE_PASSENGER;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) createdAt = LocalDateTime.now();
-        if (role == null) role = UserRole.ROLE_PASSENGER;
+        if (updatedAt == null) updatedAt = LocalDateTime.now();
+        if (roleType == null && role != null) {
+            try {
+                roleType = UserRole.valueOf(role.getRoleName());
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import me.nilushan.mybus.entity.enums.TripStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -52,6 +53,13 @@ public class Trip {
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private List<TripSeat> tripSeats = new ArrayList<>();
+
+    @OneToMany(mappedBy = "trip", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("trip")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<TripStaff> tripCrew = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {

@@ -1,11 +1,10 @@
 package me.nilushan.mybus.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import me.nilushan.mybus.entity.enums.BusType;
-import java.util.ArrayList;
-import java.util.List;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "buses")
@@ -23,29 +22,36 @@ public class Bus {
     @JoinColumn(name = "operator_id", nullable = false)
     private BusOperator operator;
 
-    @Column(name = "registration_number", nullable = false, unique = true, length = 30)
-    private String registrationNumber;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "bus_class_id")
+    private BusClass busClassEntity;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "bus_class", nullable = false)
-    private BusType busClass;
+    @Column(name = "bus_class")
+    @Builder.Default
+    private BusType busClass = BusType.AC_Seater;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "seat_layout_id")
+    private SeatLayout seatLayout;
+
+    @Column(name = "registration_number", nullable = false, unique = true, length = 30)
+    private String registrationNumber;
 
     @Column(name = "total_capacity", nullable = false)
     private Integer totalCapacity;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
-    @OneToMany(mappedBy = "bus", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("bus")
-    @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<Seat> seats = new ArrayList<>();
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
     @PrePersist
     public void prePersist() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
         if (isActive == null) isActive = true;
+        if (busClass == null) busClass = BusType.AC_Seater;
     }
 }

@@ -17,12 +17,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  MenuItem,
   CircularProgress,
   Alert,
   IconButton,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/api';
@@ -40,7 +42,20 @@ const OwnerStaffPage = () => {
     email: '',
     phoneNumber: '',
     password: 'password123',
+    role: 'ROLE_STAFF',
   });
+
+  // Edit State
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    fullName: '',
+    email: '',
+    phoneNumber: '',
+    password: '',
+    role: 'ROLE_STAFF',
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -70,11 +85,51 @@ const OwnerStaffPage = () => {
       if (res.success) {
         addNotification('Staff Registered', `Created staff account for ${formData.fullName}`, 'success');
         setDialogOpen(false);
-        setFormData({ fullName: '', email: '', phoneNumber: '', password: 'password123' });
+        setFormData({ fullName: '', email: '', phoneNumber: '', password: 'password123', role: 'ROLE_STAFF' });
         fetchStaff();
       }
     } catch (err) {
       showToast(err.message || 'Failed to add staff', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (staff) => {
+    setEditingStaff(staff);
+    setEditFormData({
+      fullName: staff.fullName || '',
+      email: staff.email || '',
+      phoneNumber: staff.phoneNumber || '',
+      password: '',
+      role: staff.roleType || (staff.role?.roleName) || 'ROLE_STAFF',
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateStaff = async (e) => {
+    e.preventDefault();
+    if (!editingStaff) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        fullName: editFormData.fullName,
+        email: editFormData.email,
+        phoneNumber: editFormData.phoneNumber,
+        role: editFormData.role,
+      };
+      if (editFormData.password && editFormData.password.trim() !== '') {
+        payload.password = editFormData.password;
+      }
+      const res = await api.put(`/owner/staff/${editingStaff.userId}`, payload);
+      if (res.success) {
+        addNotification('Staff Updated', `Updated staff account for ${editFormData.fullName}`, 'success');
+        setEditDialogOpen(false);
+        setEditingStaff(null);
+        fetchStaff();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update staff member', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -150,13 +205,22 @@ const OwnerStaffPage = () => {
                     <TableCell>{st.phoneNumber}</TableCell>
                     <TableCell>
                       <Chip
-                        label="CONDUCTOR / CREW"
-                        color="warning"
+                        label={st.roleType === 'ROLE_OWNER' ? 'OPERATOR / OWNER' : 'CONDUCTOR / CREW'}
+                        color={st.roleType === 'ROLE_OWNER' ? 'primary' : 'warning'}
                         size="small"
                         sx={{ fontWeight: 700 }}
                       />
                     </TableCell>
                     <TableCell sx={{ textAlign: 'right' }}>
+                      <IconButton
+                        title="Edit Staff Member"
+                        onClick={() => handleOpenEdit(st)}
+                        color="primary"
+                        size="small"
+                        sx={{ mr: 0.5 }}
+                      >
+                        <EditIcon />
+                      </IconButton>
                       <IconButton
                         title="Delete Staff"
                         onClick={() => handleDeleteStaff(st.userId, st.fullName)}
@@ -208,6 +272,19 @@ const OwnerStaffPage = () => {
             />
 
             <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Role Assignment"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+            >
+              <MenuItem value="ROLE_STAFF">Conductor / Operations Crew (ROLE_STAFF)</MenuItem>
+              <MenuItem value="ROLE_OWNER">Bus Operator Admin (ROLE_OWNER)</MenuItem>
+            </TextField>
+
+            <TextField
               required
               fullWidth
               size="small"
@@ -221,6 +298,71 @@ const OwnerStaffPage = () => {
             <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={submitting}>
               {submitting ? 'Registering...' : 'Register Staff Account'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      {/* Edit Staff Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Edit Staff Details</DialogTitle>
+        <Box component="form" onSubmit={handleUpdateStaff}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              required
+              fullWidth
+              size="small"
+              label="Full Name"
+              value={editFormData.fullName}
+              onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
+            />
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              type="email"
+              label="Email Address"
+              value={editFormData.email}
+              onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+            />
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              label="Mobile Phone (+94...)"
+              value={editFormData.phoneNumber}
+              onChange={(e) => setEditFormData({ ...editFormData, phoneNumber: e.target.value })}
+            />
+
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Role Assignment"
+              value={editFormData.role}
+              onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value })}
+            >
+              <MenuItem value="ROLE_STAFF">Conductor / Operations Crew (ROLE_STAFF)</MenuItem>
+              <MenuItem value="ROLE_OWNER">Bus Operator Admin (ROLE_OWNER)</MenuItem>
+            </TextField>
+
+            <TextField
+              fullWidth
+              size="small"
+              type="password"
+              label="New Password (optional)"
+              helperText="Leave blank to keep existing password"
+              value={editFormData.password}
+              onChange={(e) => setEditFormData({ ...editFormData, password: e.target.value })}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogActions>
         </Box>

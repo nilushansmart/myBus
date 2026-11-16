@@ -26,7 +26,8 @@ import {
   Tab,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RouteIcon from '@mui/icons-material/Route';
 import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
@@ -48,6 +49,28 @@ const OwnerRoutesPage = () => {
   // Dialogs
   const [tripDialogOpen, setTripDialogOpen] = useState(false);
   const [routeDialogOpen, setRouteDialogOpen] = useState(false);
+
+  // Edit State - Route
+  const [routeEditDialogOpen, setRouteEditDialogOpen] = useState(false);
+  const [editingRoute, setEditingRoute] = useState(null);
+  const [routeEditFormData, setRouteEditFormData] = useState({
+    originStationId: '',
+    destinationStationId: '',
+    estimatedDurationMinutes: 180,
+    totalDistanceKm: 120.0,
+    routeNumber: '',
+  });
+
+  // Edit State - Trip
+  const [tripEditDialogOpen, setTripEditDialogOpen] = useState(false);
+  const [editingTrip, setEditingTrip] = useState(null);
+  const [tripEditFormData, setTripEditFormData] = useState({
+    busId: '',
+    routeId: '',
+    departureTime: '',
+    arrivalTime: '',
+    baseFare: 1500,
+  });
 
   // Forms
   const [tripFormData, setTripFormData] = useState({
@@ -105,46 +128,8 @@ const OwnerRoutesPage = () => {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    Promise.all([
-      api.get('/owner/trips'),
-      api.get('/owner/buses'),
-      api.get('/owner/routes'),
-      api.get('/public/stations'),
-    ])
-      .then(([tripRes, busRes, routeRes, stationRes]) => {
-        if (!isMounted) return;
-        if (tripRes.success) setTrips(tripRes.data);
-        if (busRes.success) {
-          setBuses(busRes.data);
-          if (busRes.data.length > 0) setTripFormData((prev) => ({ ...prev, busId: busRes.data[0].busId }));
-        }
-        if (routeRes.success) {
-          setRoutes(routeRes.data);
-          if (routeRes.data.length > 0) setTripFormData((prev) => ({ ...prev, routeId: routeRes.data[0].routeId }));
-        }
-        if (stationRes.success) {
-          setStations(stationRes.data);
-          if (stationRes.data.length >= 2) {
-            setRouteFormData((prev) => ({
-              ...prev,
-              originStationId: stationRes.data[0].stationId,
-              destinationStationId: stationRes.data[1].stationId,
-            }));
-          }
-        }
-      })
-      .catch((err) => {
-        if (isMounted) setError(err.message || 'Failed to load routes and schedules');
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   const handleOpenTripDialog = () => {
     const now = new Date();
@@ -185,6 +170,46 @@ const OwnerRoutesPage = () => {
     }
   };
 
+  const handleOpenEditTrip = (trip) => {
+    setEditingTrip(trip);
+    const depIso = trip.departureTime ? trip.departureTime.slice(0, 16) : '';
+    const arrIso = trip.arrivalTime ? trip.arrivalTime.slice(0, 16) : '';
+    setTripEditFormData({
+      busId: trip.busId || (buses[0]?.busId || ''),
+      routeId: trip.routeId || (routes[0]?.routeId || ''),
+      departureTime: depIso,
+      arrivalTime: arrIso,
+      baseFare: trip.baseFare || 1500,
+    });
+    setTripEditDialogOpen(true);
+  };
+
+  const handleUpdateTrip = async (e) => {
+    e.preventDefault();
+    if (!editingTrip) return;
+    setSubmitting(true);
+    try {
+      const res = await api.put(`/owner/trips/${editingTrip.tripId}`, {
+        busId: Number(tripEditFormData.busId),
+        routeId: Number(tripEditFormData.routeId),
+        departureTime: tripEditFormData.departureTime,
+        arrivalTime: tripEditFormData.arrivalTime,
+        baseFare: Number(tripEditFormData.baseFare),
+      });
+
+      if (res.success) {
+        addNotification('Trip Updated', `Trip #${editingTrip.tripId} timetable updated successfully`, 'success');
+        setTripEditDialogOpen(false);
+        setEditingTrip(null);
+        fetchData();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update trip schedule', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleDeleteTrip = async (tripId) => {
     if (!window.confirm('Are you sure you want to cancel and delete this trip?')) return;
     try {
@@ -220,6 +245,48 @@ const OwnerRoutesPage = () => {
       }
     } catch (err) {
       showToast(err.message || 'Failed to create route', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenEditRoute = (route) => {
+    setEditingRoute(route);
+    setRouteEditFormData({
+      originStationId: route.originStation?.stationId || '',
+      destinationStationId: route.destinationStation?.stationId || '',
+      estimatedDurationMinutes: route.estimatedDurationMinutes || 180,
+      totalDistanceKm: route.totalDistanceKm || 120.0,
+      routeNumber: route.routeNumber || '',
+    });
+    setRouteEditDialogOpen(true);
+  };
+
+  const handleUpdateRoute = async (e) => {
+    e.preventDefault();
+    if (!editingRoute) return;
+    if (routeEditFormData.originStationId === routeEditFormData.destinationStationId) {
+      showToast('Origin and Destination stations cannot be the same', 'warning');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await api.put(`/owner/routes/${editingRoute.routeId}`, {
+        originStationId: Number(routeEditFormData.originStationId),
+        destinationStationId: Number(routeEditFormData.destinationStationId),
+        estimatedDurationMinutes: Number(routeEditFormData.estimatedDurationMinutes),
+        totalDistanceKm: Number(routeEditFormData.totalDistanceKm),
+        routeNumber: routeEditFormData.routeNumber || undefined,
+      });
+
+      if (res.success) {
+        addNotification('Route Updated', `Route #${editingRoute.routeId} updated successfully`, 'success');
+        setRouteEditDialogOpen(false);
+        setEditingRoute(null);
+        fetchData();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update route', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -356,6 +423,15 @@ const OwnerRoutesPage = () => {
                       </TableCell>
                       <TableCell sx={{ textAlign: 'right' }}>
                         <IconButton
+                          title="Edit Trip Schedule"
+                          onClick={() => handleOpenEditTrip(trip)}
+                          color="primary"
+                          size="small"
+                          sx={{ mr: 0.5 }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton
                           title="Delete / Cancel Trip"
                           onClick={() => handleDeleteTrip(trip.tripId)}
                           color="error"
@@ -389,7 +465,7 @@ const OwnerRoutesPage = () => {
               <Table>
                 <TableHead>
                   <TableRow sx={{ bgcolor: '#f8fafc' }}>
-                    <TableCell sx={{ fontWeight: 700 }}>Route ID</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Route ID / Number</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Origin Station</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Destination Station</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Distance (KM)</TableCell>
@@ -400,7 +476,9 @@ const OwnerRoutesPage = () => {
                 <TableBody>
                   {routes.map((r) => (
                     <TableRow key={r.routeId} hover>
-                      <TableCell sx={{ fontWeight: 800 }}>#{r.routeId}</TableCell>
+                      <TableCell sx={{ fontWeight: 800 }}>
+                        {r.routeNumber ? r.routeNumber : `#${r.routeId}`}
+                      </TableCell>
                       <TableCell>
                         <strong>{r.originStation?.city}</strong> ({r.originStation?.stationName})
                       </TableCell>
@@ -412,6 +490,15 @@ const OwnerRoutesPage = () => {
                         {Math.floor(r.estimatedDurationMinutes / 60)}h {r.estimatedDurationMinutes % 60}m
                       </TableCell>
                       <TableCell sx={{ textAlign: 'right' }}>
+                        <IconButton
+                          title="Edit Route"
+                          onClick={() => handleOpenEditRoute(r)}
+                          color="primary"
+                          size="small"
+                          sx={{ mr: 0.5 }}
+                        >
+                          <EditIcon />
+                        </IconButton>
                         <IconButton
                           title="Delete Route"
                           onClick={() => handleDeleteRoute(r.routeId)}
@@ -513,6 +600,89 @@ const OwnerRoutesPage = () => {
         </Box>
       </Dialog>
 
+      {/* Edit Trip Dialog */}
+      <Dialog open={tripEditDialogOpen} onClose={() => setTripEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Edit Scheduled Journey</DialogTitle>
+        <Box component="form" onSubmit={handleUpdateTrip}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Select Route"
+              value={tripEditFormData.routeId}
+              onChange={(e) => setTripEditFormData({ ...tripEditFormData, routeId: e.target.value })}
+            >
+              {routes.map((r) => (
+                <MenuItem key={r.routeId} value={r.routeId}>
+                  {r.originStation?.city} → {r.destinationStation?.city} ({r.totalDistanceKm} km)
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Assign Bus"
+              value={tripEditFormData.busId}
+              onChange={(e) => setTripEditFormData({ ...tripEditFormData, busId: e.target.value })}
+            >
+              {buses.map((b) => (
+                <MenuItem key={b.busId} value={b.busId}>
+                  {b.registrationNumber} • {b.busClass?.replace(/_/g, ' ')} ({b.totalCapacity} seats)
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  type="datetime-local"
+                  label="Departure Time"
+                  value={tripEditFormData.departureTime}
+                  onChange={(e) => setTripEditFormData({ ...tripEditFormData, departureTime: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid size={{ xs: 6 }}>
+                <TextField
+                  required
+                  fullWidth
+                  size="small"
+                  type="datetime-local"
+                  label="Arrival Time"
+                  value={tripEditFormData.arrivalTime}
+                  onChange={(e) => setTripEditFormData({ ...tripEditFormData, arrivalTime: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              type="number"
+              label="Base Fare per Seat (LKR)"
+              value={tripEditFormData.baseFare}
+              onChange={(e) => setTripEditFormData({ ...tripEditFormData, baseFare: e.target.value })}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setTripEditDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Schedule Changes'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
       {/* Create Route Dialog */}
       <Dialog open={routeDialogOpen} onClose={() => setRouteDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Create New Express Route</DialogTitle>
@@ -574,6 +744,81 @@ const OwnerRoutesPage = () => {
             <Button onClick={() => setRouteDialogOpen(false)}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={submitting}>
               {submitting ? 'Creating...' : 'Create Route'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      {/* Edit Route Dialog */}
+      <Dialog open={routeEditDialogOpen} onClose={() => setRouteEditDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Edit Route Configuration</DialogTitle>
+        <Box component="form" onSubmit={handleUpdateRoute}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Route Code / Number (optional)"
+              placeholder="e.g. EX-01 or R-COL-KAN"
+              value={routeEditFormData.routeNumber}
+              onChange={(e) => setRouteEditFormData({ ...routeEditFormData, routeNumber: e.target.value })}
+            />
+
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Origin Terminal / Station"
+              value={routeEditFormData.originStationId}
+              onChange={(e) => setRouteEditFormData({ ...routeEditFormData, originStationId: e.target.value })}
+            >
+              {stations.map((s) => (
+                <MenuItem key={s.stationId} value={s.stationId}>
+                  {s.city} - {s.stationName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Destination Terminal / Station"
+              value={routeEditFormData.destinationStationId}
+              onChange={(e) => setRouteEditFormData({ ...routeEditFormData, destinationStationId: e.target.value })}
+            >
+              {stations.map((s) => (
+                <MenuItem key={s.stationId} value={s.stationId}>
+                  {s.city} - {s.stationName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              type="number"
+              label="Total Distance (KM)"
+              value={routeEditFormData.totalDistanceKm}
+              onChange={(e) => setRouteEditFormData({ ...routeEditFormData, totalDistanceKm: e.target.value })}
+            />
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              type="number"
+              label="Estimated Duration (Minutes)"
+              value={routeEditFormData.estimatedDurationMinutes}
+              onChange={(e) => setRouteEditFormData({ ...routeEditFormData, estimatedDurationMinutes: e.target.value })}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setRouteEditDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Route Changes'}
             </Button>
           </DialogActions>
         </Box>

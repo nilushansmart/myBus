@@ -142,6 +142,9 @@ public class BillingServiceImpl implements BillingService {
 
         staff.setFullName(request.getFullName());
         staff.setPhoneNumber(request.getPhoneNumber());
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            staff.setEmail(request.getEmail());
+        }
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             staff.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         }

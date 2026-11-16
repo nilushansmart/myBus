@@ -21,9 +21,12 @@ import {
   CircularProgress,
   Alert,
   IconButton,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import DeleteIcon from '@mui/icons-material/DeleteOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +40,8 @@ const OwnerFleetPage = () => {
   const [buses, setBuses] = useState([]);
   const [operators, setOperators] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Add Dialog
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     operatorId: '',
@@ -45,6 +50,18 @@ const OwnerFleetPage = () => {
     totalCapacity: 40,
     isActive: true,
   });
+
+  // Edit Dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingBus, setEditingBus] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    operatorId: '',
+    registrationNumber: '',
+    busClass: 'AC_Seater',
+    totalCapacity: 40,
+    isActive: true,
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -70,32 +87,8 @@ const OwnerFleetPage = () => {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    Promise.all([
-      api.get('/owner/buses'),
-      api.get('/owner/operators'),
-    ])
-      .then(([busRes, opRes]) => {
-        if (!isMounted) return;
-        if (busRes.success) setBuses(busRes.data);
-        if (opRes.success) {
-          setOperators(opRes.data);
-          if (opRes.data.length > 0) {
-            setFormData((prev) => ({ ...prev, operatorId: opRes.data[0].operatorId }));
-          }
-        }
-      })
-      .catch((err) => {
-        if (isMounted) setError(err.message || 'Failed to load fleet');
-      })
-      .finally(() => {
-        if (isMounted) setLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    fetchFleetData();
+  }, [fetchFleetData]);
 
   const handleOpenDialog = () => {
     setDialogOpen(true);
@@ -108,6 +101,7 @@ const OwnerFleetPage = () => {
       registrationNumber: '',
       busClass: 'AC_Seater',
       totalCapacity: 40,
+      isActive: true,
     }));
   };
 
@@ -127,6 +121,43 @@ const OwnerFleetPage = () => {
       }
     } catch (err) {
       showToast(err.message || 'Failed to save bus', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenEdit = (bus) => {
+    setEditingBus(bus);
+    setEditFormData({
+      operatorId: bus.operator?.operatorId || (operators[0]?.operatorId || ''),
+      registrationNumber: bus.registrationNumber || '',
+      busClass: bus.busClass || 'AC_Seater',
+      totalCapacity: bus.totalCapacity || 40,
+      isActive: bus.isActive !== false,
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateBus = async (e) => {
+    e.preventDefault();
+    if (!editingBus) return;
+    setSubmitting(true);
+    try {
+      const res = await api.put(`/owner/buses/${editingBus.busId}`, {
+        operatorId: Number(editFormData.operatorId),
+        registrationNumber: editFormData.registrationNumber,
+        busClass: editFormData.busClass,
+        totalCapacity: Number(editFormData.totalCapacity),
+        isActive: editFormData.isActive,
+      });
+      if (res.success) {
+        addNotification('Bus Updated', `Bus ${editFormData.registrationNumber} updated successfully`, 'success');
+        setEditDialogOpen(false);
+        setEditingBus(null);
+        fetchFleetData();
+      }
+    } catch (err) {
+      showToast(err.message || 'Failed to update bus details', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -227,10 +258,20 @@ const OwnerFleetPage = () => {
                     </TableCell>
                     <TableCell sx={{ textAlign: 'right' }}>
                       <IconButton
+                        title="Edit Bus Details"
+                        onClick={() => handleOpenEdit(bus)}
+                        color="primary"
+                        size="small"
+                        sx={{ mr: 0.5 }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton
                         title="Regenerate Seats Grid"
                         onClick={() => handleRegenerateSeats(bus.busId, bus.registrationNumber)}
                         color="secondary"
                         size="small"
+                        sx={{ mr: 0.5 }}
                       >
                         <RefreshIcon />
                       </IconButton>
@@ -310,6 +351,81 @@ const OwnerFleetPage = () => {
             <Button onClick={handleCloseDialog}>Cancel</Button>
             <Button type="submit" variant="contained" color="primary" disabled={submitting}>
               {submitting ? 'Generating...' : 'Save & Build Layout'}
+            </Button>
+          </DialogActions>
+        </Box>
+      </Dialog>
+
+      {/* Edit Bus Dialog */}
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Edit Bus Details</DialogTitle>
+        <Box component="form" onSubmit={handleUpdateBus}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Operator"
+              value={editFormData.operatorId}
+              onChange={(e) => setEditFormData({ ...editFormData, operatorId: e.target.value })}
+            >
+              {operators.map((op) => (
+                <MenuItem key={op.operatorId} value={op.operatorId}>
+                  {op.operatorName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              label="Registration Number"
+              value={editFormData.registrationNumber}
+              onChange={(e) => setEditFormData({ ...editFormData, registrationNumber: e.target.value })}
+            />
+
+            <TextField
+              select
+              required
+              fullWidth
+              size="small"
+              label="Bus Class"
+              value={editFormData.busClass}
+              onChange={(e) => setEditFormData({ ...editFormData, busClass: e.target.value })}
+            >
+              <MenuItem value="AC_Seater">AC Seater (2+2)</MenuItem>
+              <MenuItem value="Non_AC_Seater">Non-AC Seater (2+2)</MenuItem>
+              <MenuItem value="AC_Sleeper">AC Sleeper (Upper/Lower Decks)</MenuItem>
+              <MenuItem value="Non_AC_Sleeper">Non-AC Sleeper</MenuItem>
+            </TextField>
+
+            <TextField
+              required
+              fullWidth
+              size="small"
+              type="number"
+              label="Total Capacity (Seats)"
+              value={editFormData.totalCapacity}
+              onChange={(e) => setEditFormData({ ...editFormData, totalCapacity: e.target.value })}
+            />
+
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editFormData.isActive}
+                  onChange={(e) => setEditFormData({ ...editFormData, isActive: e.target.checked })}
+                  color="primary"
+                />
+              }
+              label={editFormData.isActive ? 'Status: Active (Operational)' : 'Status: Inactive (Maintenance)'}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2.5 }}>
+            <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button type="submit" variant="contained" color="primary" disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Bus Changes'}
             </Button>
           </DialogActions>
         </Box>

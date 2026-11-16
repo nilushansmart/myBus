@@ -24,6 +24,7 @@ import OwnerRoutesPage from './pages/owner/OwnerRoutesPage';
 import OwnerStaffPage from './pages/owner/OwnerStaffPage';
 import OwnerBillingPage from './pages/owner/OwnerBillingPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import TaskDashboardPage from './pages/TaskDashboardPage';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
                 <Routes>
                   {/* Public Routes */}
                   <Route path="/" element={<Home />} />
+                  <Route path="/tasks" element={<TaskDashboardPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/trips/:tripId/seats" element={<TripSeatsPage />} />
@@ -57,7 +59,7 @@ function App() {
                   <Route
                     path="/my-bookings"
                     element={
-                      <ProtectedRoute allowedRoles={['ROLE_PASSENGER', 'ROLE_OWNER']}>
+                      <ProtectedRoute allowedRoles={['ROLE_PASSENGER']}>
                         <MyBookingsPage />
                       </ProtectedRoute>
                     }

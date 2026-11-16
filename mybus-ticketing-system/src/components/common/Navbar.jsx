@@ -30,6 +30,7 @@ import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import PeopleIcon from '@mui/icons-material/People';
 import RouteIcon from '@mui/icons-material/Route';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotification } from '../../context/NotificationContext';
@@ -143,7 +144,11 @@ const Navbar = () => {
                 Search Trips
               </Button>
 
-              {isAuthenticated && (
+              <Button component={RouterLink} to="/tasks" startIcon={<AssignmentIcon />} color="inherit">
+                Tasks
+              </Button>
+
+              {isAuthenticated && !isStaff && !isOwner && (
                 <Button component={RouterLink} to="/my-bookings" color="inherit">
                   My Bookings
                 </Button>
@@ -248,12 +253,14 @@ const Navbar = () => {
                       </Typography>
                     </Box>
                     <Divider sx={{ my: 0.5 }} />
-                    <MenuItem component={RouterLink} to="/my-bookings" onClick={handleMenuClose}>
-                      <ListItemIcon>
-                        <ConfirmationNumberIcon fontSize="small" />
-                      </ListItemIcon>
-                      My Bookings
-                    </MenuItem>
+                    {!isOwner && !isStaff && (
+                      <MenuItem component={RouterLink} to="/my-bookings" onClick={handleMenuClose}>
+                        <ListItemIcon>
+                          <ConfirmationNumberIcon fontSize="small" />
+                        </ListItemIcon>
+                        My Bookings
+                      </MenuItem>
+                    )}
                     {isOwner && (
                       <MenuItem component={RouterLink} to="/owner/dashboard" onClick={handleMenuClose}>
                         <ListItemIcon>
@@ -345,7 +352,16 @@ const Navbar = () => {
             </ListItemButton>
           </ListItem>
 
-          {isAuthenticated && (
+          <ListItem disablePadding>
+            <ListItemButton component={RouterLink} to="/tasks" onClick={() => setMobileMenuOpen(false)}>
+              <ListItemIcon>
+                <AssignmentIcon color="primary" />
+              </ListItemIcon>
+              <ListItemText primary="Task Manager" />
+            </ListItemButton>
+          </ListItem>
+
+          {isAuthenticated && !isStaff && !isOwner && (
             <ListItem disablePadding>
               <ListItemButton
                 component={RouterLink}

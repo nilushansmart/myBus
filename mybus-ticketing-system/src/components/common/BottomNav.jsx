@@ -5,6 +5,7 @@ import ConfirmationNumberIcon from '@mui/icons-material/ConfirmationNumber';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import PersonIcon from '@mui/icons-material/Person';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,15 +14,39 @@ const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const getCurrentValue = () => {
-    const path = location.pathname;
-    if (path === '/') return 0;
-    if (path.startsWith('/my-bookings')) return 1;
-    if (path.startsWith('/staff/checkin')) return 2;
-    if (path.startsWith('/owner')) return 2;
-    if (path === '/login' || path === '/register') return 3;
-    return 0;
-  };
+  // Determine actions dynamically based on role
+  // Staff and Owner do not want "My Bookings" option
+  const actions = React.useMemo(() => {
+    const list = [
+      { label: 'Search', icon: <DirectionsBusIcon />, path: '/' },
+    ];
+
+    if (!isOwner && !isStaff) {
+      list.push({ label: 'Bookings', icon: <ConfirmationNumberIcon />, path: '/my-bookings' });
+    }
+
+    list.push({ label: 'Tasks', icon: <AssignmentIcon />, path: '/tasks' });
+
+    if (isOwner) {
+      list.push({ label: 'Admin', icon: <DashboardIcon />, path: '/owner/dashboard' });
+    } else if (isStaff) {
+      list.push({ label: 'Check-in', icon: <QrCodeScannerIcon />, path: '/staff/checkin' });
+    }
+
+    list.push({
+      label: isAuthenticated ? 'Account' : 'Sign In',
+      icon: <PersonIcon />,
+      path: '/login',
+    });
+
+    return list;
+  }, [isAuthenticated, isOwner, isStaff]);
+
+  const currentIndex = actions.findIndex((a) => {
+    if (a.path === '/' && location.pathname === '/') return true;
+    if (a.path !== '/' && location.pathname.startsWith(a.path)) return true;
+    return false;
+  });
 
   return (
     <Paper
@@ -40,30 +65,21 @@ const BottomNav = () => {
     >
       <BottomNavigation
         showLabels
-        value={getCurrentValue()}
+        value={currentIndex >= 0 ? currentIndex : 0}
         onChange={(event, newValue) => {
-          if (newValue === 0) navigate('/');
-          else if (newValue === 1) navigate('/my-bookings');
-          else if (newValue === 2) {
-            if (isOwner) navigate('/owner/dashboard');
-            else if (isStaff) navigate('/staff/checkin');
-            else navigate('/login');
-          } else if (newValue === 3) {
-            navigate('/login');
+          const selectedAction = actions[newValue];
+          if (selectedAction) {
+            navigate(selectedAction.path);
           }
         }}
       >
-        <BottomNavigationAction label="Search" icon={<DirectionsBusIcon />} />
-        <BottomNavigationAction label="Bookings" icon={<ConfirmationNumberIcon />} />
-        {isOwner ? (
-          <BottomNavigationAction label="Admin" icon={<DashboardIcon />} />
-        ) : isStaff ? (
-          <BottomNavigationAction label="Check-in" icon={<QrCodeScannerIcon />} />
-        ) : null}
-        <BottomNavigationAction
-          label={isAuthenticated ? 'Account' : 'Sign In'}
-          icon={<PersonIcon />}
-        />
+        {actions.map((action, idx) => (
+          <BottomNavigationAction
+            key={idx}
+            label={action.label}
+            icon={action.icon}
+          />
+        ))}
       </BottomNavigation>
     </Paper>
   );

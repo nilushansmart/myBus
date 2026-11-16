@@ -35,7 +35,10 @@ api.interceptors.response.use(
       }
     }
     const message = error.response?.data?.message || error.message || 'Something went wrong';
-    return Promise.reject(new Error(message));
+    const customError = new Error(message);
+    customError.response = error.response;
+    customError.validationErrors = error.response?.data?.data || {};
+    return Promise.reject(customError);
   }
 );
 

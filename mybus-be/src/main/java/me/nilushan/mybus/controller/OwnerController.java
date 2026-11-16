@@ -145,7 +145,7 @@ public class OwnerController {
     }
 
     // --- Billing & Analytics Hub ---
-    @GetMapping("/billing/summary")
+    @GetMapping({"/billing/summary", "/summary"})
     public ResponseEntity<ApiResponse<BillingSummaryResponse>> getBillingSummary() {
         return ResponseEntity.ok(ApiResponse.success(billingService.getBillingSummary()));
     }

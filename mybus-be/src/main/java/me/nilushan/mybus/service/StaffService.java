@@ -5,7 +5,9 @@ import me.nilushan.mybus.dto.CheckInRequest;
 import me.nilushan.mybus.dto.TicketResponse;
 import me.nilushan.mybus.dto.TripDetailResponse;
 import me.nilushan.mybus.entity.Ticket;
+import me.nilushan.mybus.entity.Trip;
 import me.nilushan.mybus.entity.User;
+import me.nilushan.mybus.entity.enums.TripStatus;
 import me.nilushan.mybus.repo.TicketRepository;
 import me.nilushan.mybus.repo.TripRepository;
 import org.springframework.stereotype.Service;
@@ -24,8 +26,16 @@ public class StaffService {
     private final TripService tripService;
 
     public List<TripDetailResponse> getUpcomingTrips() {
-        return tripRepository.findByDepartureTimeAfterOrderByDepartureTimeAsc(LocalDateTime.now().minusHours(4)).stream()
-                .map(tripService::mapToTripDetail)
+        List<Trip> upcoming = tripRepository.findByDepartureTimeAfterOrderByDepartureTimeAsc(LocalDateTime.now().minusHours(4));
+        if (upcoming.isEmpty()) {
+            return tripRepository.findAll().stream()
+                    .filter(t -> t.getStatus() == TripStatus.scheduled || t.getStatus() == TripStatus.delayed)
+                    .map(t -> tripService.mapToTripDetail(t))
+                    .collect(Collectors.toList());
+        }
+        return upcoming.stream()
+                .filter(t -> t.getStatus() == TripStatus.scheduled || t.getStatus() == TripStatus.delayed)
+                .map(t -> tripService.mapToTripDetail(t))
                 .collect(Collectors.toList());
     }
 

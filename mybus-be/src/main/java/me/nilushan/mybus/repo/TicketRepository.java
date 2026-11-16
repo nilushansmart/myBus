@@ -24,4 +24,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
            "t.booking.bookingReference LIKE CONCAT('%', :keyword, '%') OR " +
            "t.tripSeat.seat.seatNumber LIKE CONCAT('%', :keyword, '%'))")
     List<Ticket> searchTicketsForTrip(@Param("tripId") Long tripId, @Param("keyword") String keyword);
+
+    @Query("SELECT COUNT(t) > 0 FROM Ticket t WHERE t.tripSeat.trip.tripId = :tripId")
+    boolean existsByTripId(@Param("tripId") Long tripId);
 }

@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// Dynamically resolve base API URL: prefer Vite env variable, fallback to default port 8080
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8080/api',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

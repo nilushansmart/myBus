@@ -10,6 +10,7 @@ import me.nilushan.mybus.entity.enums.SeatCategory;
 import me.nilushan.mybus.repo.BusOperatorRepository;
 import me.nilushan.mybus.repo.BusRepository;
 import me.nilushan.mybus.repo.SeatRepository;
+import me.nilushan.mybus.repo.TripRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +24,7 @@ public class FleetService {
     private final BusRepository busRepository;
     private final BusOperatorRepository operatorRepository;
     private final SeatRepository seatRepository;
+    private final TripRepository tripRepository;
 
     public List<Bus> getAllBuses() {
         return busRepository.findAll();
@@ -77,6 +79,10 @@ public class FleetService {
         if (!busRepository.existsById(busId)) {
             throw new RuntimeException("Bus not found with id: " + busId);
         }
+        if (tripRepository.existsByBusBusId(busId)) {
+            throw new RuntimeException("Cannot delete bus because it is currently assigned to scheduled trips. Please reassign or cancel those trips first.");
+        }
+        seatRepository.deleteByBusBusId(busId);
         busRepository.deleteById(busId);
     }
 

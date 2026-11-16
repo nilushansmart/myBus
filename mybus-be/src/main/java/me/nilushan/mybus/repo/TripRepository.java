@@ -38,4 +38,8 @@ public interface TripRepository extends JpaRepository<Trip, Long> {
     );
 
     List<Trip> findByDepartureTimeAfterOrderByDepartureTimeAsc(LocalDateTime time);
+
+    boolean existsByBusBusId(Long busId);
+
+    boolean existsByRouteRouteId(Long routeId);
 }

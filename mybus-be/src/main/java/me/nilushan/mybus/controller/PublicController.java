@@ -1,5 +1,6 @@
 package me.nilushan.mybus.controller;
 
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import me.nilushan.mybus.dto.ApiResponse;
 import me.nilushan.mybus.dto.TripDetailResponse;
@@ -32,7 +33,7 @@ public class PublicController {
         return ResponseEntity.ok(ApiResponse.success(routeService.getAllRoutes()));
     }
 
-    @GetMapping("/trips/search")
+    @GetMapping({"/trips", "/trips/search"})
     public ResponseEntity<ApiResponse<List<TripDetailResponse>>> searchTrips(
             @RequestParam(required = false) String originCity,
             @RequestParam(required = false) String destinationCity,
@@ -40,6 +41,12 @@ public class PublicController {
     ) {
         List<TripDetailResponse> trips = tripService.searchTrips(originCity, destinationCity, date);
         return ResponseEntity.ok(ApiResponse.success(trips));
+    }
+
+    @GetMapping("/trips/{tripId}")
+    public ResponseEntity<ApiResponse<TripDetailResponse>> getTripDetails(@PathVariable Long tripId) {
+        TripDetailResponse tripDetails = tripService.getTripDetailsWithSeats(tripId);
+        return ResponseEntity.ok(ApiResponse.success(tripDetails));
     }
 
     @GetMapping("/trips/{tripId}/seats")

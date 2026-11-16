@@ -8,6 +8,7 @@ import me.nilushan.mybus.entity.Station;
 import me.nilushan.mybus.repo.RouteRepository;
 import me.nilushan.mybus.repo.RouteStopRepository;
 import me.nilushan.mybus.repo.StationRepository;
+import me.nilushan.mybus.repo.TripRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class RouteService {
     private final RouteRepository routeRepository;
     private final StationRepository stationRepository;
     private final RouteStopRepository routeStopRepository;
+    private final TripRepository tripRepository;
 
     public List<Route> getAllRoutes() {
         return routeRepository.findAll();
@@ -68,6 +70,10 @@ public class RouteService {
         if (!routeRepository.existsById(routeId)) {
             throw new RuntimeException("Route not found with id: " + routeId);
         }
+        if (tripRepository.existsByRouteRouteId(routeId)) {
+            throw new RuntimeException("Cannot delete route because trips are scheduled on it. Please remove or cancel those trips first.");
+        }
+        routeStopRepository.deleteByRouteRouteId(routeId);
         routeRepository.deleteById(routeId);
     }
 

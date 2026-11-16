@@ -1,55 +1,57 @@
 import { createTheme } from '@mui/material/styles';
+import { tokens } from './designTokens';
 
 const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#1e3a8a', // Deep royal navy
-      light: '#3b82f6',
-      dark: '#172554',
-      contrastText: '#ffffff',
+      main: tokens.colors.primary.main,
+      light: tokens.colors.primary[500],
+      dark: tokens.colors.primary.dark,
+      contrastText: tokens.colors.primary.contrastText,
     },
     secondary: {
-      main: '#06b6d4', // Vibrant modern cyan
-      light: '#67e8f9',
-      dark: '#0e7490',
-      contrastText: '#ffffff',
+      main: tokens.colors.secondary.main,
+      light: tokens.colors.secondary[300],
+      dark: tokens.colors.secondary.dark,
+      contrastText: tokens.colors.secondary.contrastText,
     },
     success: {
-      main: '#10b981',
-      light: '#34d399',
-      dark: '#059669',
+      main: tokens.colors.state.success.main,
+      light: tokens.colors.state.success.light,
+      dark: tokens.colors.state.success.dark,
     },
     warning: {
-      main: '#f59e0b',
-      light: '#fbbf24',
-      dark: '#d97706',
+      main: tokens.colors.state.warning.main,
+      light: tokens.colors.state.warning.light,
+      dark: tokens.colors.state.warning.dark,
     },
     error: {
-      main: '#ef4444',
-      light: '#f87171',
-      dark: '#dc2626',
+      main: tokens.colors.state.error.main,
+      light: tokens.colors.state.error.light,
+      dark: tokens.colors.state.error.dark,
     },
     background: {
-      default: '#f8fafc',
-      paper: '#ffffff',
+      default: tokens.colors.background.default,
+      paper: tokens.colors.background.paper,
     },
     text: {
-      primary: '#0f172a',
-      secondary: '#64748b',
+      primary: tokens.colors.text.primary,
+      secondary: tokens.colors.text.secondary,
     },
+    divider: tokens.colors.border.default,
   },
   typography: {
-    fontFamily: '"Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    h1: { fontWeight: 800, letterSpacing: '-0.025em' },
-    h2: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h3: { fontWeight: 700, letterSpacing: '-0.02em' },
-    h4: { fontWeight: 700, letterSpacing: '-0.015em' },
-    h5: { fontWeight: 600, letterSpacing: '-0.01em' },
-    h6: { fontWeight: 600 },
-    subtitle1: { fontWeight: 500 },
-    subtitle2: { fontWeight: 500 },
-    button: { textTransform: 'none', fontWeight: 600 },
+    fontFamily: tokens.typography.fontFamily,
+    h1: { fontWeight: tokens.typography.weights.extraBold, letterSpacing: '-0.025em' },
+    h2: { fontWeight: tokens.typography.weights.bold, letterSpacing: '-0.02em' },
+    h3: { fontWeight: tokens.typography.weights.bold, letterSpacing: '-0.02em' },
+    h4: { fontWeight: tokens.typography.weights.bold, letterSpacing: '-0.015em' },
+    h5: { fontWeight: tokens.typography.weights.semiBold, letterSpacing: '-0.01em' },
+    h6: { fontWeight: tokens.typography.weights.semiBold },
+    subtitle1: { fontWeight: tokens.typography.weights.medium },
+    subtitle2: { fontWeight: tokens.typography.weights.medium },
+    button: { textTransform: 'none', fontWeight: tokens.typography.weights.semiBold },
   },
   shape: {
     borderRadius: 12,
@@ -58,35 +60,46 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 10,
+          borderRadius: tokens.radii.md,
           padding: '10px 20px',
           boxShadow: 'none',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            boxShadow: '0 4px 12px rgba(30, 58, 138, 0.15)',
+            transform: 'translateY(-1px)',
+            boxShadow: tokens.shadows.md,
+          },
+          '&:active': {
+            transform: 'scale(0.98)',
           },
         },
         containedPrimary: {
-          background: 'linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%)',
+          background: tokens.colors.primary.gradient,
         },
         containedSecondary: {
-          background: 'linear-gradient(135deg, #0891b2 0%, #06b6d4 100%)',
+          background: tokens.colors.secondary.gradient,
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #e2e8f0',
+          borderRadius: tokens.radii.lg,
+          boxShadow: tokens.shadows.sm,
+          border: `1px solid ${tokens.colors.border.default}`,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&:hover': {
+            borderColor: tokens.colors.secondary.main,
+            boxShadow: tokens.shadows.md,
+          },
         },
       },
     },
     MuiChip: {
       styleOverrides: {
         root: {
-          fontWeight: 600,
-          borderRadius: 8,
+          fontWeight: tokens.typography.weights.semiBold,
+          borderRadius: tokens.radii.sm,
+          transition: 'all 0.15s ease',
         },
       },
     },
@@ -94,8 +107,20 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-root': {
-            borderRadius: 10,
+            borderRadius: tokens.radii.md,
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            '&.Mui-focused fieldset': {
+              borderColor: tokens.colors.secondary.main,
+              boxShadow: `0 0 0 3px rgba(6, 182, 212, 0.25)`,
+            },
           },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        rounded: {
+          borderRadius: tokens.radii.lg,
         },
       },
     },

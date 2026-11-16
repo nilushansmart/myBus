@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/staff")
@@ -33,8 +34,7 @@ public class StaffController {
     @GetMapping("/trips/{tripId}/search")
     public ResponseEntity<ApiResponse<List<TicketResponse>>> searchTripPassengers(
             @PathVariable Long tripId,
-            @RequestParam(required = false) String keyword
-    ) {
+            @RequestParam(required = false) String keyword) {
         return ResponseEntity.ok(ApiResponse.success(staffService.searchTickets(tripId, keyword)));
     }
 
@@ -43,8 +43,7 @@ public class StaffController {
         TicketResponse ticket = staffService.checkInTicket(request);
         return ResponseEntity.ok(ApiResponse.success(
                 ticket.getIsCheckedIn() ? "Passenger checked in successfully" : "Check-in undone",
-                ticket
-        ));
+                ticket));
     }
 
     @GetMapping("/tickets/lookup/{bookingRef}")
@@ -55,9 +54,19 @@ public class StaffController {
     @PutMapping("/trips/{tripId}/status")
     public ResponseEntity<ApiResponse<TripDetailResponse>> updateTripStatus(
             @PathVariable Long tripId,
-            @RequestParam TripStatus status
-    ) {
-        Trip trip = tripService.updateTripStatus(tripId, status);
-        return ResponseEntity.ok(ApiResponse.success("Trip status updated to " + status, tripService.mapToTripDetail(trip)));
+            @RequestParam(required = false) TripStatus status,
+            @RequestBody(required = false) Map<String, Object> body) {
+        TripStatus resolvedStatus = status;
+        if (resolvedStatus == null && body != null && body.containsKey("status")) {
+            resolvedStatus = TripStatus.valueOf(body.get("status").toString().toLowerCase());
+        }
+        if (resolvedStatus == null) {
+            throw new RuntimeException(
+                    "Trip status must be provided as a query param or in JSON body (e.g. status=delayed)");
+        }
+        Trip trip = tripService.updateTripStatus(tripId, resolvedStatus);
+        return ResponseEntity
+                .ok(ApiResponse.success("Trip status updated to " + resolvedStatus, tripService.mapToTripDetail(trip)));
     }
+                
 }

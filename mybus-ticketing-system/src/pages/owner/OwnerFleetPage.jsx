@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Box,
@@ -48,11 +48,7 @@ const OwnerFleetPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchFleetData();
-  }, []);
-
-  const fetchFleetData = async () => {
+  const fetchFleetData = useCallback(async () => {
     try {
       setLoading(true);
       const [busRes, opRes] = await Promise.all([
@@ -71,7 +67,35 @@ const OwnerFleetPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      api.get('/owner/buses'),
+      api.get('/owner/operators'),
+    ])
+      .then(([busRes, opRes]) => {
+        if (!isMounted) return;
+        if (busRes.success) setBuses(busRes.data);
+        if (opRes.success) {
+          setOperators(opRes.data);
+          if (opRes.data.length > 0) {
+            setFormData((prev) => ({ ...prev, operatorId: opRes.data[0].operatorId }));
+          }
+        }
+      })
+      .catch((err) => {
+        if (isMounted) setError(err.message || 'Failed to load fleet');
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleOpenDialog = () => {
     setDialogOpen(true);
@@ -79,6 +103,12 @@ const OwnerFleetPage = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
+    setFormData((prev) => ({
+      ...prev,
+      registrationNumber: '',
+      busClass: 'AC_Seater',
+      totalCapacity: 40,
+    }));
   };
 
   const handleSaveBus = async (e) => {
